@@ -1,0 +1,175 @@
+import random
+import numpy as np
+
+# ==============================
+# 設定
+# ==============================
+AGENTS = 10
+HORSES_PER_AGENT = 10
+GENERATIONS = 1000
+INITIAL_MONEY = 1_000_000
+TOTAL_PRIZE = 1_000_000
+
+MUTATION = 0.05
+MONSTER_RATE = 0.003
+BREEDING_COST_PER_HORSE = 20000
+
+# ==============================
+# エージェント初期化
+# ==============================
+agents = []
+
+for i in range(AGENTS):
+    strategy = random.choice(["speed", "stamina", "balance"])
+    agents.append({
+        "id": i,
+        "money": INITIAL_MONEY,
+        "strategy": strategy,
+        "horses": []
+    })
+
+def create_horse(strategy):
+    base_speed = random.uniform(0.4, 0.6)
+    base_stamina = random.uniform(0.4, 0.6)
+
+    if strategy == "speed":
+        base_speed += 0.1
+    elif strategy == "stamina":
+        base_stamina += 0.1
+
+    return {
+        "speed": min(1, base_speed),
+        "stamina": min(1, base_stamina)
+    }
+
+for agent in agents:
+    agent["horses"] = [create_horse(agent["strategy"]) for _ in range(HORSES_PER_AGENT)]
+
+# ==============================
+# トレンド初期値
+# ==============================
+distance = 1800
+baseline = 1800
+
+# ==============================
+# ログ保存
+# ==============================
+history = []
+
+# ==============================
+# 世代ループ
+# ==============================
+for gen in range(GENERATIONS):
+
+    # --- トレンド慣性モデル ---
+    distance = 0.9 * distance + 0.1 * baseline
+
+    # 小さなランダム揺らぎ
+    distance += random.uniform(-50, 50)
+
+    # ショックイベント
+    if random.random() < 0.03:
+        distance = random.choice([1200, 2400])
+
+    distance = max(1200, min(2400, distance))
+
+    # --- 全馬 ---
+    all_horses = []
+    for agent in agents:
+        for horse in agent["horses"]:
+            fitness = (
+                0.5 * horse["speed"]
+                + horse["stamina"] * (distance / 2400)
+            )
+            all_horses.append((fitness, agent, horse))
+
+    all_horses.sort(key=lambda x: x[0], reverse=True)
+
+    # --- 賞金 ---
+    prizes = [0.2, 0.15, 0.1] + [0.05]*7 + [0.02]*10
+    for i in range(min(20, len(all_horses))):
+        prize = TOTAL_PRIZE * prizes[i]
+        all_horses[i][1]["money"] += prize
+
+    # --- 維持費 ---
+    for agent in agents:
+        cost = sum(5000 + 3000*(h["speed"] + h["stamina"]) for h in agent["horses"])
+        agent["money"] -= cost
+
+    # --- 繁殖コスト ---
+    for agent in agents:
+        agent["money"] -= BREEDING_COST_PER_HORSE * HORSES_PER_AGENT
+
+    # --- 破産 ---
+    agents = [a for a in agents if a["money"] > 0]
+    if len(agents) < 2:
+        break
+
+    # --- 繁殖 ---
+    for agent in agents:
+        elites = sorted(agent["horses"],
+                        key=lambda h: 0.5*h["speed"] + h["stamina"]*(distance/2400),
+                        reverse=True)[:5]
+
+        new_horses = []
+        while len(new_horses) < HORSES_PER_AGENT:
+            parent = random.choice(elites)
+            speed = parent["speed"] + random.gauss(0, MUTATION)
+            stamina = parent["stamina"] + random.gauss(0, MUTATION)
+
+            if random.random() < MONSTER_RATE:
+                speed += 0.25
+                stamina += 0.25
+
+            speed = max(0, min(1, speed))
+            stamina = max(0, min(1, stamina))
+
+            new_horses.append({"speed": speed, "stamina": stamina})
+
+        agent["horses"] = new_horses
+
+    # --- ログ収集 ---
+    speeds = []
+    staminas = []
+    strategy_money = {"speed":0,"stamina":0,"balance":0}
+
+    for agent in agents:
+        strategy_money[agent["strategy"]] += agent["money"]
+        for horse in agent["horses"]:
+            speeds.append(horse["speed"])
+            staminas.append(horse["stamina"])
+
+    # 簡易クラスタ分類
+    speed_type = sum(1 for s,st in zip(speeds,staminas) if s > st+0.1)
+    stamina_type = sum(1 for s,st in zip(speeds,staminas) if st > s+0.1)
+    balance_type = len(speeds) - speed_type - stamina_type
+
+    history.append({
+        "gen": gen,
+        "agents": len(agents),
+        "avg_speed": np.mean(speeds),
+        "avg_stamina": np.mean(staminas),
+        "trend": distance,
+        "speed_ratio": speed_type/len(speeds),
+        "stamina_ratio": stamina_type/len(speeds),
+        "balance_ratio": balance_type/len(speeds),
+        "money_speed": strategy_money["speed"],
+        "money_stamina": strategy_money["stamina"],
+        "money_balance": strategy_money["balance"],
+    })
+
+print("最終世代:", history[-1])
+
+import csv
+import datetime
+
+filename = f"simulation_ver3_log_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+
+with open(filename, "w", newline="") as f:
+    writer = csv.DictWriter(f, fieldnames=history[0].keys())
+    writer.writeheader()
+    writer.writerows(history)
+
+print(f"{filename} に保存しました")
+
+print("simulation_log.csv に保存しました")
