@@ -1,0 +1,6 @@
+<h2>{{ horse.name }} の血統</h2>
+
+<ul>
+    <li>父: {{ horse.father.name if horse.father else "不明" }}</li>
+    <li>母: {{ horse.mother.name if horse.mother else "不明" }}</li>
+</ul>

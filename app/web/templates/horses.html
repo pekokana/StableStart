@@ -1,0 +1,21 @@
+<h1>馬一覧</h1>
+
+<button hx-get="/horses" hx-target="#horse-area">
+<div id="horse-area"></div>
+
+<ul>
+{% for h in horses %}
+<li>
+    <span 
+        hx-get="/horse/{{h.id}}/pedigree"
+        hx-target="#pedigree-area"
+        hx-swap="innerHTML"
+        style="cursor:pointer; color:blue;"
+    >
+        {{h.name}}
+    </span>
+</li>
+{% endfor %}
+</ul>
+
+<div id="pedigree-area"></div>

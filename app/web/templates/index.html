@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sim</title>
+</head>
+<body>
+
+<h1>Simulation</h1>
+
+<button onclick="init()">初期化</button>
+<button onclick="run()">1年進める</button>
+
+<pre id="out"></pre>
+
+<h2>データ表示</h2>
+
+<a href="/horses_page">馬一覧ページ</a><br>
+<a href="/races_page">レース一覧ページ</a><br>
+<a href="/results_page">結果ページ</a><br>
+
+<h2>レースログ</h2>
+
+<button hx-get="/logs" hx-target="#log-area" hx-swap="innerHTML">
+    ログ読み込み
+</button>
+
+<div id="log-area"></div>
+
+<input id="year" value="1">
+<button onclick="loadStats()">年統計</button>
+
+<pre id="data"></pre>
+
+<script src="/static/js/app.js"></script>
+
+</body>
+</html>

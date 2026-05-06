@@ -2,6 +2,20 @@
 
 StableStart は、競馬を題材にした **進化型エコシステムシミュレーター** です。
 
+---
+### アプリ実行時のコマンド
+```bash
+uv run uvicorn app.main:app --reload
+```
+
+### アクセス
+```bash
+http://localhost:8000
+```
+
+---
+
+
 検討に関する情報は `/docs/SUMMARY.md`の目次を参考に参照してください。
 
 本プロジェクトでは以下を探究します：
