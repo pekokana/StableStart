@@ -28,30 +28,30 @@ app.mount("/static", StaticFiles(directory="app/web/static"), name="static")
 # ==========================
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
+    # return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="index.html", context={})
 
 @app.get("/horses_page", response_class=HTMLResponse)
 def horses_page(request: Request):
     data = get_horses_service()
-    return templates.TemplateResponse("horses.html", {
+    return templates.TemplateResponse(request=request, name="horses.html", context={
         "request": request,
         "horses": data
     })
 
 @app.get("/races_page", response_class=HTMLResponse)
 def races_page(request: Request):
-    return templates.TemplateResponse("races.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="races.html", context={"request": request})
 
 
 @app.get("/results_page", response_class=HTMLResponse)
 def results_page(request: Request):
-    return templates.TemplateResponse("results.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="results.html", context={"request": request})
 
 @app.get("/logs", response_class=HTMLResponse)
 def logs(request: Request):
     data = get_logs_service()
-    return templates.TemplateResponse("logs.html", {
+    return templates.TemplateResponse(request=request, name="logs.html", context={
         "request": request,
         "logs": data
     })
